@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ulasan Pengguna</title>
+  <style>
+    :root{
+      --primary:#081F5C; /* kamu bilang suka ini */
+      --card-bg:#fff;
+      --muted:#7a7a7a;
+      --radius:14px;
+      --shadow: 0 8px 24px rgba(6,15,34,0.12);
+      --glass: rgba(255,255,255,0.6);
+    }
+
+    *{box-sizing:border-box}
+    body{
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      margin:0;
+      background: linear-gradient(180deg,#f6f8fb, #eef2f9);
+      color:#0b0b0b;
+      padding:40px;
+    }
+
+    .wrap{
+      max-width:1100px;
+      margin:0 auto;
+      display:grid;
+      grid-template-columns: 420px 1fr;
+      gap:28px;
+      align-items:start;
+    }
+
+    /* FORM CARD */
+    .form-card{
+      background:var(--card-bg);
+      border-radius:var(--radius);
+      padding:20px;
+      box-shadow:var(--shadow);
+      position:relative;
+    }
+    .form-card h3{margin:0 0 12px 0;font-size:20px}
+    .hint{font-size:13px;color:var(--muted);margin-bottom:12px}
+
+    .field{margin-bottom:12px}
+    label{display:block;font-size:13px;color:var(--muted); margin-bottom:6px}
+    input[type="text"], textarea{
+      width:100%;
+      padding:12px 14px;
+      border-radius:10px;
+      border:1px solid #e6e9f0;
+      font-size:14px;
+      background:white;
+    }
+    textarea{min-height:110px;resize:vertical}
+
+    /* Star rating - custom */
+    .stars{
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .star{
+      width:40px;height:40px;border-radius:8px;
+      display:inline-grid;place-items:center;
+      cursor:pointer;
+      user-select:none;
+      transition:transform .12s ease;
+      background:linear-gradient(180deg,#fbfbfd,#f7f9fc);
+      border:1px solid #e8ecf7;
+      box-shadow: 0 2px 6px rgba(8,31,92,0.06);
+      font-weight:700;
+      color:#c4c9d9;
+      font-size:18px;
+    }
+    .star.selected{ color: #ffb400; transform: translateY(-3px); border-color: rgba(255,180,0,0.15); box-shadow:0 8px 20px rgba(255,180,0,0.08) }
+    .star:hover{ transform: translateY(-3px) }
+
+    .row{display:flex;gap:12px;align-items:center}
+    .btn{
+      background:var(--primary);
+      color:white;padding:10px 16px;border-radius:10px;border:none;cursor:pointer;font-weight:600;
+      box-shadow: 0 6px 18px rgba(8,31,92,0.12);
+    }
+    .btn.ghost{ background:transparent;color:var(--primary); border:1px solid rgba(8,31,92,0.08) }
+
+    /* upload preview */
+    .upload-row{display:flex;gap:10px;align-items:center}
+    .thumb{
+      width:64px;height:64px;border-radius:10px;overflow:hidden;border:1px solid #e6e9f0;background:#fbfdff;
+      display:grid; place-items:center; font-size:12px; color:var(--muted)
+    }
+
+    /* LIST ULASAN */
+    .reviews{
+      padding:0;
+      list-style:none;
+      display:grid;
+      gap:16px;
+    }
+    .review-card{
+      background:var(--card-bg);
+      border-radius:14px;
+      padding:16px;
+      box-shadow: 0 6px 18px rgba(6,15,34,0.06);
+      display:flex; gap:14px; align-items:flex-start;
+    }
+    .avatar{
+      flex: 0 0 56px;
+      width:56px;height:56px;border-radius:12px;
+      background:linear-gradient(180deg,#eef3ff,#e7f0ff);
+      display:grid;place-items:center; font-weight:700;color:var(--primary);font-size:18px;
+      border:1px solid rgba(8,31,92,0.06);
+    }
+    .rev-body{flex:1}
+    .meta{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+    .name{font-weight:700}
+    .date{font-size:13px;color:var(--muted)}
+    .rev-text{color:#111827;margin:6px 0 8px 0; line-height:1.45}
+    .rev-photo{max-width:180px;border-radius:10px;overflow:hidden;border:1px solid #e6e9f0}
+
+    .rating-inline{display:flex;gap:6px;align-items:center}
+
+    /* empty state */
+    .empty{
+      text-align:center;color:var(--muted);padding:30px;border-radius:12px;border:1px dashed #e9eefc;background:linear-gradient(180deg,#fbfdff,#ffffff);
+    }
+
+    /* responsive */
+    @media (max-width:980px){
+      .wrap{grid-template-columns:1fr; padding:0 12px}
+      .float-right{display:none}
+    }
+  </style>
+</head>
+<body>
+
+  <div style="max-width:1100px;margin:0 auto 22px">
+    <h2 style="margin:0 0 6px">Ulasan Pengguna</h2>
+    <div style="color:var(--muted)">Beri tahu orang lain pengalamanmu. Rating dan komentar akan membantu pengguna lain memilih.</div>
+  </div>
+
+  <div class="wrap">
+
+    <!-- FORM -->
+    <div class="form-card" aria-live="polite">
+      <h3>Tulis Ulasan</h3>
+      <div class="hint">Nilai pengalamanmu dan ceritakan sedikit. Foto bisa ditambahkan untuk memperkaya ulasan.</div>
+
+      <div class="field">
+        <label for="name">Nama</label>
+        <input id="name" type="text" placeholder="Masukkan nama (boleh inisial)">
+      </div>
+
+      <div class="field">
+        <label>Rating</label>
+        <div class="stars" role="radiogroup" aria-label="Rating">
+          <div class="star" data-value="1" role="radio" aria-checked="false" tabindex="0">★</div>
+          <div class="star" data-value="2" role="radio" aria-checked="false" tabindex="0">★</div>
+          <div class="star" data-value="3" role="radio" aria-checked="false" tabindex="0">★</div>
+          <div class="star" data-value="4" role="radio" aria-checked="false" tabindex="0">★</div>
+          <div class="star" data-value="5" role="radio" aria-checked="false" tabindex="0">★</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="comment">Komentar</label>
+        <textarea id="comment" placeholder="Ceritakan pengalamanmu..."></textarea>
+      </div>
+
+      <div class="field">
+        <label>Foto (opsional)</label>
+        <div class="upload-row">
+          <div class="thumb" id="thumb">Preview</div>
+          <div style="flex:1;display:flex;gap:8px">
+            <input id="photo" type="file" accept="image/*" style="flex:1">
+            <button id="removePhoto" class="btn ghost" type="button">Hapus</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:12px">
+        <button id="submitBtn" class="btn">Kirim Ulasan</button>
+        <button id="clearBtn" class="btn ghost" type="button">Bersihkan</button>
+      </div>
+      <div id="formMsg" style="margin-top:10px;color:#c0392b;font-size:13px;display:none"></div>
+    </div>
+
+    <!-- LIST ULASAN -->
+    <div>
+      <div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+        <strong style="font-size:18px">Ulasan Terbaru</strong>
+        <div style="color:var(--muted);font-size:13px">Jumlah: <span id="count">0</span></div>
+      </div>
+
+      <ul id="reviewsList" class="reviews">
+        <li class="empty" id="emptyState">Belum ada ulasan. Jadilah yang pertama!</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <script>
+    // Element refs
+    const stars = Array.from(document.querySelectorAll('.star'));
+    const nameInput = document.getElementById('name');
+    const commentInput = document.getElementById('comment');
+    const photoInput = document.getElementById('photo');
+    const thumb = document.getElementById('thumb');
+    const submitBtn = document.getElementById('submitBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const removePhoto = document.getElementById('removePhoto');
+    const reviewsList = document.getElementById('reviewsList');
+    const emptyState = document.getElementById('emptyState');
+    const countEl = document.getElementById('count');
+    const formMsg = document.getElementById('formMsg');
+
+    let selectedRating = 0;
+    let photoDataUrl = null;
+    let reviews = [];
+
+    // star interactions
+    function updateStars(v){
+      stars.forEach(s=>{
+        const val = Number(s.dataset.value);
+        s.classList.toggle('selected', val <= v);
+        s.setAttribute('aria-checked', val === v ? 'true' : 'false');
+      });
+    }
+
+    stars.forEach(s=>{
+      s.addEventListener('click', ()=> {
+        selectedRating = Number(s.dataset.value);
+        updateStars(selectedRating);
+      });
+      s.addEventListener('keydown', (e)=>{
+        if(e.key === 'Enter' || e.key === ' '){
+          e.preventDefault();
+          selectedRating = Number(s.dataset.value);
+          updateStars(selectedRating);
+        }
+        if(e.key === 'ArrowLeft'){
+          selectedRating = Math.max(1, selectedRating - 1);
+          updateStars(selectedRating);
+        }
+        if(e.key === 'ArrowRight'){
+          selectedRating = Math.min(5, selectedRating + 1);
+          updateStars(selectedRating);
+        }
+      });
+      s.addEventListener('mouseover', ()=>{
+        const v = Number(s.dataset.value);
+        updateStars(v);
+      });
+      s.addEventListener('mouseout', ()=>{
+        updateStars(selectedRating);
+      });
+    });
+
+    // photo preview
+    photoInput.addEventListener('change', (e)=>{
+      const file = e.target.files[0];
+      if(!file) return resetThumb();
+      if(!file.type.startsWith('image/')) return alert('Tolong pilih file gambar.');
+      const reader = new FileReader();
+      reader.onload = function(ev){
+        photoDataUrl = ev.target.result;
+        thumb.style.backgroundImage = `url('${photoDataUrl}')`;
+        thumb.style.backgroundSize = 'cover';
+        thumb.textContent = '';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    removePhoto.addEventListener('click', resetThumb);
+    function resetThumb(){
+      photoInput.value = '';
+      photoDataUrl = null;
+      thumb.style.backgroundImage = '';
+      thumb.textContent = 'Preview';
+    }
+
+    // submit
+    submitBtn.addEventListener('click', ()=>{
+      formMsg.style.display='none';
+      const name = nameInput.value.trim() || 'Anonim';
+      const comment = commentInput.value.trim();
+      const rating = selectedRating;
+
+      // validation simple
+      if(!rating){
+        showError('Tolong pilih rating (bintang).');
+        return;
+      }
+      if(!comment){
+        showError('Tolong tulis komentar singkat.');
+        return;
+      }
+
+      const review = {
+        id: Date.now(),
+        name,
+        comment,
+        rating,
+        photo: photoDataUrl,
+        date: new Date().toISOString()
+      };
+
+      // add to head of array
+      reviews.unshift(review);
+      renderReviews();
+      clearForm();
+    });
+
+    clearBtn.addEventListener('click', ()=>{
+      clearForm();
+    });
+
+    function showError(msg){
+      formMsg.textContent = msg;
+      formMsg.style.display = 'block';
+    }
+
+    function clearForm(){
+      nameInput.value = '';
+      commentInput.value = '';
+      selectedRating = 0;
+      updateStars(0);
+      resetThumb();
+      formMsg.style.display='none';
+    }
+
+    // render reviews
+    function renderReviews(){
+      // clear list
+      reviewsList.innerHTML = '';
+      countEl.textContent = reviews.length;
+      if(reviews.length === 0){
+        reviewsList.appendChild(emptyState);
+        return;
+      }
+
+      reviews.forEach(r=>{
+        const li = document.createElement('li');
+        li.className = 'review-card';
+
+        const avatar = document.createElement('div');
+        avatar.className = 'avatar';
+        avatar.textContent = initials(r.name);
+
+        const body = document.createElement('div');
+        body.className = 'rev-body';
+
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        const nameEl = document.createElement('div');
+        nameEl.className = 'name';
+        nameEl.textContent = r.name;
+        const dateEl = document.createElement('div');
+        dateEl.className = 'date';
+        dateEl.textContent = formatDate(r.date);
+        const ratingInline = document.createElement('div');
+        ratingInline.className = 'rating-inline';
+        ratingInline.innerHTML = starsInline(r.rating);
+
+        meta.appendChild(nameEl);
+        meta.appendChild(ratingInline);
+        meta.appendChild(dateEl);
+
+        const txt = document.createElement('div');
+        txt.className = 'rev-text';
+        txt.textContent = r.comment;
+
+        body.appendChild(meta);
+        body.appendChild(txt);
+
+        if(r.photo){
+          const imgWrap = document.createElement('div');
+          imgWrap.className = 'rev-photo';
+          const im = document.createElement('img');
+          im.src = r.photo;
+          im.alt = 'Foto ulasan';
+          im.style.width = '100%';
+          im.style.display = 'block';
+          imgWrap.appendChild(im);
+          body.appendChild(imgWrap);
+        }
+
+        li.appendChild(avatar);
+        li.appendChild(body);
+        reviewsList.appendChild(li);
+      });
+    }
+
+    // helpers
+    function initials(name){
+      const parts = name.split(' ').filter(Boolean);
+      if(parts.length === 0) return 'A';
+      if(parts.length === 1) return parts[0].slice(0,2).toUpperCase();
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+
+    function formatDate(iso){
+      const d = new Date(iso);
+      return d.toLocaleDateString('id-ID', {year:'numeric', month:'short', day:'numeric'});
+    }
+
+    function starsInline(n){
+      let html='';
+      for(let i=1;i<=5;i++){
+        if(i<=n) html += '<span style="color:#ffb400">★</span>';
+        else html += '<span style="color:#ddd">★</span>';
+      }
+      return html;
+    }
+
+    // initial render
+    renderReviews();
+
+    // keyboard accessibility: allow pressing 1-5 keys to set rating
+    window.addEventListener('keydown', (e)=>{
+      if(e.key >= '1' && e.key <= '5'){
+        selectedRating = Number(e.key);
+        updateStars(selectedRating);
+      }
+    });
+  </script>
+</body>
+</html>
